@@ -29,7 +29,6 @@ class Vaga {
   }
 }
 
-
 class VagaFrontEnd extends Vaga {
   constructor(empresa, cargo, requisitos, modalidade, frameworkPrincipal) {
     super(empresa, cargo, requisitos, modalidade);
@@ -46,21 +45,21 @@ const bancoDeVagas = [
   new VagaFrontEnd(
     "TechSul Solutions",
     "Desenvolvedor(a) Front-End Júnior I",
-    ["HTML5", "CSS3", "JavaScript", "Git", "React"], 
+    ["HTML5", "CSS3", "JavaScript", "Git", "React"], // 4 de 5 (80% - Alta)
     "Remoto",
     "React"
   ),
   new VagaFrontEnd(
     "InovaWeb SC",
     "Dev Front-End Júnior (Interfaces)",
-    ["HTML5", "CSS3", "JavaScript", "React", "TypeScript"], 
+    ["HTML5", "CSS3", "JavaScript", "React", "TypeScript"], // 3 de 5 (60% - Média)
     "Híbrido",
     "React"
   ),
   new VagaFrontEnd(
     "NextGen Sistemas",
     "Programador(a) Front-End Júnior",
-    ["JavaScript", "Git", "React", "TypeScript", "Tailwind CSS"], 
+    ["JavaScript", "Git", "React", "TypeScript", "Tailwind CSS"], // 2 de 5 (40% - Baixa)
     "Remoto",
     "React + Tailwind"
   )
@@ -71,16 +70,70 @@ function buscarVagasNoServidor() {
   return new Promise((resolve, reject) => {
     console.log("⏳ Conectando ao servidor de RH... Buscando vagas disponíveis...");
 
-    
     setTimeout(() => {
-      const servidorOnline = true; 
+      const servidorOnline = true;
 
       if (servidorOnline && bancoDeVagas.length > 0) {
-        resolve(bancoDeVagas); 
+        resolve(bancoDeVagas);
       } else {
         reject("Erro 500: Não foi possível carregar as vagas do servidor.");
       }
     }, 1500);
+  });
+}
+
+
+function classificarCompatibilidade(percentual) {
+  if (percentual >= 80 && percentual <= 100) {
+    return "Alta compatibilidade";
+  } else if (percentual >= 50 && percentual <= 79) {
+    return "Média compatibilidade";
+  } else {
+    return "Baixa compatibilidade";
+  }
+}
+
+
+function analisarVaga(perfilCandidato, vaga) {
+  
+  const habilidadesAtendidas = vaga.requisitos.filter((requisito) =>
+    perfilCandidato.habilidades.includes(requisito)
+  );
+
+  
+  const habilidadesFaltantes = vaga.requisitos.filter(
+    (requisito) => !perfilCandidato.habilidades.includes(requisito)
+  );
+
+  
+  const atendeTodosRequisitos = vaga.requisitos.every((requisito) =>
+    perfilCandidato.habilidades.includes(requisito)
+  );
+
+  
+  const percentual = Math.round(
+    (habilidadesAtendidas.length / vaga.requisitos.length) * 100
+  );
+
+  
+  const classificacao = classificarCompatibilidade(percentual);
+
+  return {
+    vaga: vaga,
+    percentual: percentual,
+    classificacao: classificacao,
+    habilidadesAtendidas: habilidadesAtendidas,
+    habilidadesFaltantes: habilidadesFaltantes,
+    atendeTodosRequisitos: atendeTodosRequisitos
+  };
+}
+
+
+function encontrarMelhorVaga(relatorioAnalises) {
+  return relatorioAnalises.reduce((melhorAtual, analiseAtual) => {
+    return analiseAtual.percentual > melhorAtual.percentual
+      ? analiseAtual
+      : melhorAtual;
   });
 }
 
@@ -92,20 +145,44 @@ async function iniciarSistema() {
 
   console.log(`Candidato(a): ${candidato.nome}`);
   console.log(`Área: ${candidato.areaInteresse} (${candidato.tempoExperienciaMeses} meses de experiência)`);
+  console.log(`Disponibilidade Imediata: ${candidato.disponivelImediato ? "Sim" : "Não"}`);
   console.log(`Habilidades atuais: ${candidato.habilidades.join(", ")}`);
 
   try {
-    
     const vagasCarregadas = await buscarVagasNoServidor();
-    console.log(`✅ Sucesso! ${vagasCarregadas.length} vagas carregadas do servidor:`);
+    console.log(`✅ Sucesso! ${vagasCarregadas.length} vagas carregadas do servidor.\n`);
 
+    
+    const relatorioDeCompatibilidade = vagasCarregadas.map((vaga) =>
+      analisarVaga(candidato, vaga)
+    );
 
-    for (const vaga of vagasCarregadas) {
-      console.log(`- ${vaga.exibirResumo()}`);
+    console.log("=== RELATÓRIO DE COMPATIBILIDADE POR VAGA ===");
+    for (const item of relatorioDeCompatibilidade) {
+      console.log(`\n📌 ${item.vaga.exibirResumo()}`);
+      console.log(`   - Compatibilidade: ${item.percentual}% (${item.classificacao})`);
+      console.log(`   - Habilidades em comum: ${item.habilidadesAtendidas.join(", ")}`);
+      console.log(
+        `   - Habilidades faltantes: ${
+          item.habilidadesFaltantes.length > 0
+            ? item.habilidadesFaltantes.join(", ")
+            : "Nenhuma! Gabaritou a vaga!"
+        }`
+      );
     }
+
+    
+    const melhorOpcao = encontrarMelhorVaga(relatorioDeCompatibilidade);
+    console.log("\n==================================================");
+    console.log("🏆 VAGA COM MAIOR COMPATIBILIDADE (MELHOR MATCH):");
+    console.log(`   ${melhorOpcao.vaga.cargo} na ${melhorOpcao.vaga.empresa}`);
+    console.log(`   Aderência: ${melhorOpcao.percentual}% (${melhorOpcao.classificacao})`);
+    console.log("==================================================");
+
   } catch (erro) {
     console.error(`❌ Falha na execução: ${erro}`);
   }
 }
+
 
 iniciarSistema();
