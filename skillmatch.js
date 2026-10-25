@@ -1,17 +1,19 @@
+
 const candidato = {
-  nome: "Rafael Cechinel Nunes",
-  areaInteresse: "Desenvolvimento Front-End",
-  tempoExperienciaMeses: 2,
-  disponivelImediato: true,
+  nome: "Rafael Cechinel Nunes", 
+  areaInteresse: "Desenvolvimento Front-End", 
+  tempoExperienciaMeses: 2, 
+  disponivelImediato: true, 
   habilidades: [
     "HTML5",
     "CSS3",
-    "Javascript",
+    "JavaScript",
     "Lógica de Programação",
     "Git",
-    "GitHub",
-  ],
+    "GitHub"
+  ] 
 };
+
 
 class Vaga {
   constructor(empresa, cargo, requisitos, modalidade) {
@@ -20,38 +22,90 @@ class Vaga {
     this.requisitos = requisitos;
     this.modalidade = modalidade;
   }
+
+  
   exibirResumo() {
-    return `Empresa: ${this.empresa} | Cargo: ${this.cargo}  (${this.modalidade})`;
+    return `Empresa: ${this.empresa} | Cargo: ${this.cargo} (${this.modalidade})`;
   }
 }
+
 
 class VagaFrontEnd extends Vaga {
-  constructor(empresa, cargo, requisitos, modalidade, framework) {
+  constructor(empresa, cargo, requisitos, modalidade, frameworkPrincipal) {
     super(empresa, cargo, requisitos, modalidade);
-    this.framework = framework;
+    this.frameworkPrincipal = frameworkPrincipal;
   }
 
   exibirResumo() {
-    return `${super.exibirResumo()} | Framework Foco: ${this.framework} | Requisitos: ${this.requisitos.join(", ")}`;
+    return `${super.exibirResumo()} | Framework Foco: ${this.frameworkPrincipal} | Requisitos: ${this.requisitos.join(", ")}`;
   }
 }
 
-console.log("=== PERFIL DO CANDIDATO ===");
-console.log(`Nome: ${candidato.nome}`);
-console.log(`Área de Interesse: ${candidato.areaInteresse}`);
-console.log(`Tempo de Experiência: ${candidato.tempoExperienciaMeses} meses`);
-console.log(
-  `Disponível Imediatamente: ${candidato.disponivelImediato ? "Sim" : "Não"}`,
-);
-console.log(`Habilidades: ${candidato.habilidades.join(", ")}`);
 
-const vagaTeste = new VagaFrontEnd(
-  "TechSul Sutions",
-  "Desenvolvedor Front-End Júnior",
-  ["HTML5", "CSS3", "JavaScript", "Git", "GitHub"],
-  "Remoto",
-  "React",
-);
+const bancoDeVagas = [
+  new VagaFrontEnd(
+    "TechSul Solutions",
+    "Desenvolvedor(a) Front-End Júnior I",
+    ["HTML5", "CSS3", "JavaScript", "Git", "React"], 
+    "Remoto",
+    "React"
+  ),
+  new VagaFrontEnd(
+    "InovaWeb SC",
+    "Dev Front-End Júnior (Interfaces)",
+    ["HTML5", "CSS3", "JavaScript", "React", "TypeScript"], 
+    "Híbrido",
+    "React"
+  ),
+  new VagaFrontEnd(
+    "NextGen Sistemas",
+    "Programador(a) Front-End Júnior",
+    ["JavaScript", "Git", "React", "TypeScript", "Tailwind CSS"], 
+    "Remoto",
+    "React + Tailwind"
+  )
+];
 
-console.log("=== TESTE DE CLASSE E HERANÇA ===");
-console.log(vagaTeste.exibirResumo());
+
+function buscarVagasNoServidor() {
+  return new Promise((resolve, reject) => {
+    console.log("⏳ Conectando ao servidor de RH... Buscando vagas disponíveis...");
+
+    
+    setTimeout(() => {
+      const servidorOnline = true; 
+
+      if (servidorOnline && bancoDeVagas.length > 0) {
+        resolve(bancoDeVagas); 
+      } else {
+        reject("Erro 500: Não foi possível carregar as vagas do servidor.");
+      }
+    }, 1500);
+  });
+}
+
+
+async function iniciarSistema() {
+  console.log("==================================================");
+  console.log("   SKILLMATCH JS - MOTOR DE ANÁLISE DE CURRÍCULOS ");
+  console.log("==================================================");
+
+  console.log(`Candidato(a): ${candidato.nome}`);
+  console.log(`Área: ${candidato.areaInteresse} (${candidato.tempoExperienciaMeses} meses de experiência)`);
+  console.log(`Habilidades atuais: ${candidato.habilidades.join(", ")}`);
+
+  try {
+    
+    const vagasCarregadas = await buscarVagasNoServidor();
+    console.log(`✅ Sucesso! ${vagasCarregadas.length} vagas carregadas do servidor:`);
+
+
+    for (const vaga of vagasCarregadas) {
+      console.log(`- ${vaga.exibirResumo()}`);
+    }
+  } catch (erro) {
+    console.error(`❌ Falha na execução: ${erro}`);
+  }
+}
+
+iniciarSistema();
